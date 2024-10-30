@@ -39,7 +39,7 @@ jobs:
         run: echo "Hello, World!" > hello.txt
         
       - name: Upload File
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: my-artifact
           path: hello.txt
@@ -62,7 +62,7 @@ jobs:
           echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
           
       - name: Download File
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: my-artifact
       - name: Use File
