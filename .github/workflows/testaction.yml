@@ -35,6 +35,15 @@ jobs:
           echo "env.BALANCE=82" >> $GITHUB_ENV
           echo "COLORa : $env.COLOR ">> $GITHUB_STEP_SUMMARY
 
+      - name: Generate File
+        run: echo "Hello, World!" > hello.txt
+        
+      - name: Upload File
+        uses: actions/upload-artifact@v2
+        with:
+          name: my-artifact
+          path: hello.txt
+
   set_and_use_env_vars2:
     needs: set_and_use_env_vars
     runs-on: ubuntu-latest
@@ -51,3 +60,11 @@ jobs:
           echo "BAMBOO_BUILDNUMBER: ${{ env.BAMBOO_BUILDNUMBER }}">> $GITHUB_STEP_SUMMARY
           echo "BUILDNUMBER: ${{ github.workflow }}-${{ github.job }}-${{ github.run_id }} ">> $GITHUB_STEP_SUMMARY
           echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Download File
+        uses: actions/download-artifact@v2
+        with:
+          name: my-artifact
+      - name: Use File
+        run: cat hello.txt
+          
