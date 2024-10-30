@@ -49,4 +49,5 @@ jobs:
           echo "TARGET_BRANCH: ${{ env.TARGET_BRANCH }}">> $GITHUB_STEP_SUMMARY
           echo "Balance: ${{ env.BALANCE }}">> $GITHUB_STEP_SUMMARY
           echo "BAMBOO_BUILDNUMBER: ${{ env.BAMBOO_BUILDNUMBER }}">> $GITHUB_STEP_SUMMARY
+          echo "BUILDNUMBER: ${{ github.workflow }}-${{ github.job }}-${{ github.run_id }} ">> $GITHUB_STEP_SUMMARY
           echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
