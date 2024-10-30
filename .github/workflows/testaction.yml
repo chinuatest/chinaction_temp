@@ -21,7 +21,8 @@ jobs:
         run: |-
           echo "The value of MY_ENV_VAR is $MY_ENV_VAR"
           echo "Balance : ${{ env.BALANCE }} "
-          echo "BALANCE=80" >> $GITHUB_ENV
+          echo "$BALANCE=80" >> $GITHUB_ENV
+          echo "$env.BALANCE=80" >> $GITHUB_ENV
 
   set_and_use_env_vars2:
     needs: set_and_use_env_vars
