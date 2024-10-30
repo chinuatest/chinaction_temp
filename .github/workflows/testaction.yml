@@ -1,7 +1,15 @@
-name: Example Workflow for Environment Files
+name: Workflow for Environment Files
 
-on: workflow_dispatch
+  
+on: 
+  workflow_dispatch
 
+env:
+  BAMBOO_BUILDNUMBER: '${{ github.workflow }}-${{ github.job }}-${{ github.run_id }}'
+  REF: "${{ github.ref }}"
+  TARGET_BRANCH: ${REF#refs/heads/}
+  BALANCE: 35
+  
 jobs:
   set_and_use_env_vars:
     runs-on: ubuntu-latest
@@ -10,5 +18,19 @@ jobs:
         run: echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
 
       - name: Use environment variable
-        run: |
+        run: |-
           echo "The value of MY_ENV_VAR is $MY_ENV_VAR"
+          echo "Balance : ${{ env.BALANCE }} "
+          echo "BALANCE=80" >> $GITHUB_ENV
+
+  set_and_use_env_vars2:
+    needs: set_and_use_env_vars
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use environment variable
+        run: |-
+          echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
+          echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
+          echo "TARGET_BRANCH: ${{ env.TARGET_BRANCH }}">> $GITHUB_STEP_SUMMARY
+          echo "Balance: ${{ env.BALANCE }}">> $GITHUB_STEP_SUMMARY
+          echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
