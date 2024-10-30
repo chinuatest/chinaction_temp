@@ -24,6 +24,7 @@ jobs:
           echo "COLOR=Red" >> $GITHUB_ENV
           echo "env.COLOR=Red1" >> $GITHUB_ENV
           echo "$env.COLOR=Red2" >> $GITHUB_ENV
+          run: echo "MY_VARIABLE=my_value" >> $GITHUB_ENV #this is workflow scoped
 
       - name: Use environment variable
         run: |-
@@ -33,7 +34,8 @@ jobs:
           echo "$BALANCE=80" >> $GITHUB_ENV
           echo "$env.BALANCE=81" >> $GITHUB_ENV
           echo "env.BALANCE=82" >> $GITHUB_ENV
-          echo "COLORa : $env.COLOR ">> $GITHUB_STEP_SUMMARY
+          echo "COLORa : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
+          echo "1this is workflow scoped : ${{ env.MY_VARIABLE }} ">> $GITHUB_STEP_SUMMARY
 
       - name: Generate File
         run: echo "Hello, World!" > hello.txt
@@ -60,6 +62,8 @@ jobs:
           echo "BAMBOO_BUILDNUMBER: ${{ env.BAMBOO_BUILDNUMBER }}">> $GITHUB_STEP_SUMMARY
           echo "BUILDNUMBER: ${{ github.workflow }}-${{ github.job }}-${{ github.run_id }} ">> $GITHUB_STEP_SUMMARY
           echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "2this is workflow scoped : ${{ env.MY_VARIABLE }} ">> $GITHUB_STEP_SUMMARY
+          echo "COLORa2 : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
           
       - name: Download File
         uses: actions/download-artifact@v4
