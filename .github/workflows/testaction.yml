@@ -9,20 +9,31 @@ env:
   REF: "${{ github.ref }}"
   TARGET_BRANCH: ${REF#refs/heads/}
   BALANCE: 35
+  COLOR: "Blue"
   
 jobs:
   set_and_use_env_vars:
     runs-on: ubuntu-latest
     steps:
       - name: Set environment variable
-        run: echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
+        run: |- 
+          echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
+          echo "BALANCE=80" >> $GITHUB_ENV
+          echo "SIZE=Large" >> $GITHUB_ENV
+          echo "Color = $env.COLOR"
+          echo "COLOR=Red" >> $GITHUB_ENV
+          echo "env.COLOR=Red1" >> $GITHUB_ENV
+          echo "$env.COLOR=Red2" >> $GITHUB_ENV
 
       - name: Use environment variable
         run: |-
           echo "The value of MY_ENV_VAR is $MY_ENV_VAR"
           echo "Balance : ${{ env.BALANCE }} "
+          echo "SIZE : $SIZE "
           echo "$BALANCE=80" >> $GITHUB_ENV
-          echo "$env.BALANCE=80" >> $GITHUB_ENV
+          echo "$env.BALANCE=81" >> $GITHUB_ENV
+          echo "env.BALANCE=82" >> $GITHUB_ENV
+          echo "COLORa : $env.COLOR ">> $GITHUB_STEP_SUMMARY
 
   set_and_use_env_vars2:
     needs: set_and_use_env_vars
@@ -32,6 +43,10 @@ jobs:
         run: |-
           echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
           echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
+          echo "SIZE : $SIZE ">> $GITHUB_STEP_SUMMARY
+          echo "COLOR4 : $env.COLOR ">> $GITHUB_STEP_SUMMARY
+          echo "COLOR5 : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
           echo "TARGET_BRANCH: ${{ env.TARGET_BRANCH }}">> $GITHUB_STEP_SUMMARY
           echo "Balance: ${{ env.BALANCE }}">> $GITHUB_STEP_SUMMARY
+          echo "BAMBOO_BUILDNUMBER: ${{ env.BAMBOO_BUILDNUMBER }}">> $GITHUB_STEP_SUMMARY
           echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
