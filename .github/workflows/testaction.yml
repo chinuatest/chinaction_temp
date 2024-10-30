@@ -21,11 +21,18 @@ jobs:
           echo "BALANCE=80" >> $GITHUB_ENV
           echo "SIZE=Large" >> $GITHUB_ENV
           echo "Color = $env.COLOR"
-          echo "COLOR=Red" >> $GITHUB_ENV
           export COLOR="RED11"
           echo "env.COLOR=Red1" >> $GITHUB_ENV
           echo "$env.COLOR=Red2" >> $GITHUB_ENV
           echo "MY_VARIABLE=my_value" >> $GITHUB_ENV #this is workflow scoped
+          echo "COLOR=Red" >> $GITHUB_ENV
+      - name: Set color
+        id: color-selector
+        run: echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
+      - name: Get color
+        env:
+          SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
+        run: echo "The selected color is $SELECTED_COLOR"
 
       - name: Use environment variable
         run: |-
@@ -34,7 +41,6 @@ jobs:
           echo "SIZE : $SIZE "
           echo "$BALANCE=80" >> $GITHUB_ENV
           echo "$env.BALANCE=81" >> $GITHUB_ENV
-          echo "env.BALANCE=82" >> $GITHUB_ENV
           echo "COLORa : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
           echo "1this is workflow scoped : ${{ env.MY_VARIABLE }} ">> $GITHUB_STEP_SUMMARY
 
@@ -56,7 +62,6 @@ jobs:
           echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
           echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
           echo "SIZE : $SIZE ">> $GITHUB_STEP_SUMMARY
-          echo "COLOR4 : $env.COLOR ">> $GITHUB_STEP_SUMMARY
           echo "COLOR5 : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
           echo "TARGET_BRANCH: ${{ env.TARGET_BRANCH }}">> $GITHUB_STEP_SUMMARY
           echo "Balance: ${{ env.BALANCE }}">> $GITHUB_STEP_SUMMARY
@@ -78,4 +83,8 @@ jobs:
         run: echo "::set-output name=my_output::my_value"
       - name: Use Output
         run: echo "${{ steps.step1.outputs.my_output }}"
+      - name: Get color
+        env:
+          SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
+        run: echo "V2 The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
           
