@@ -22,6 +22,7 @@ jobs:
           echo "SIZE=Large" >> $GITHUB_ENV
           echo "Color = $env.COLOR"
           echo "COLOR=Red" >> $GITHUB_ENV
+          export COLOR="RED11"
           echo "env.COLOR=Red1" >> $GITHUB_ENV
           echo "$env.COLOR=Red2" >> $GITHUB_ENV
           echo "MY_VARIABLE=my_value" >> $GITHUB_ENV #this is workflow scoped
