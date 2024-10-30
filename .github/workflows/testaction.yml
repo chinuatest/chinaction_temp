@@ -104,5 +104,7 @@ jobs:
         env:
           SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
           MY_COLOR : ${{ needs.set_and_use_env_vars.outputs.my_color1 }}
-        run: echo "V2 The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
+        run: |-
+          echo "V2 The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
+          echo "V3 color is $MY_COLOR -> ">> $GITHUB_STEP_SUMMARY
           
