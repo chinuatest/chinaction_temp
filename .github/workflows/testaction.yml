@@ -25,7 +25,7 @@ jobs:
       - name: Use Variable
         run: |-
           echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}"
-          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}">> "$GITHUB_OUTPUT"
+          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}">> $GITHUB_STEP_SUMMARY
         
   set_and_use_env_vars:
     runs-on: ubuntu-latest
