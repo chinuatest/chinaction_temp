@@ -12,6 +12,21 @@ env:
   COLOR: "Blue"
   
 jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Variable
+        run: echo "MY_VARIABLEX=my_value1" >> $GITHUB_ENV #this is workflow scoped
+
+  job2:
+    needs: job1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Variable
+        run: |-
+          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}"
+          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}">> "$GITHUB_OUTPUT"
+        
   set_and_use_env_vars:
     runs-on: ubuntu-latest
     steps:
