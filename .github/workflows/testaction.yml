@@ -67,7 +67,9 @@ jobs:
         with:
           name: my-artifact
           path: hello.txt
-
+    outputs:
+      my_color1: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
+      
   set_and_use_env_vars2:
     needs: set_and_use_env_vars
     runs-on: ubuntu-latest
@@ -101,5 +103,6 @@ jobs:
       - name: Get color
         env:
           SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
+          MY_COLOR : ${{ needs.set_and_use_env_vars.outputs.my_color1 }}
         run: echo "V2 The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
           
