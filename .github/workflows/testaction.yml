@@ -12,6 +12,8 @@ env:
   COLOR: "Blue"
   # Setting an environment variable with the value of a configuration variable
   env_var: ${{ vars.ENV_CONTEXT_VAR }}
+  JOB_NAME: "my job 1212"
+  USE_VARIABLES: 'true'
   
 jobs:
   display-variables:
