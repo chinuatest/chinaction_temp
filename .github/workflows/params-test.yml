@@ -1,0 +1,47 @@
+name: Modernization UEM Services Tier1 Development
+
+on:
+  workflow_dispatch:
+    inputs:
+      uem-services-plan:
+        description: 'UEM Services Plan'
+        type: string
+        required: true
+      airwatch-ci-upload-branch:
+        description: 'Airwatch-ci-upload-to-artifactory branch'
+        type: string
+        default: 'main'
+      dev-qe-clusters-branch:
+        description: 'Dev-qe-clusters branch'
+        type: string
+        default: 'ttp-master'
+      uem-services-tier-1-tests-branch:
+        description: 'Uem-services-tier-1-tests branch'
+        type: string
+        default: 'main'
+      uem-services-promoter-branch:
+        description: 'Uem-services-promoter branch'
+        type: string
+        default: 'main'
+      canonical-dev-qe-clusters-branch:
+        description: 'Canonical-dev-qe-clusters branch'
+        type: string
+        default: 'main'
+      uem-apigw-branch:
+        description: 'Uem-apigw branch'
+        type: string
+        default: 'main'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Variable
+        run: |
+          echo "uemplan: ${{ inputs.uem-services-plan }} airwatch: ${{ inputs.airwatch-ci-upload-branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "devqeclusters: ${{ inputs.dev-qe-clusters-branch }} uem-services-promoter: ${{ inputs.uem-services-promoter-branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "canonical-dev-qe-clusters: ${{ inputs.canonical-dev-qe-clusters-branch }} uem-apigw: ${{ inputs.uem-apigw-branch }}" >> $GITHUB_STEP_SUMMARY
