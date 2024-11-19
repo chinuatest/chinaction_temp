@@ -1,6 +1,9 @@
 name: Modernization UEM Services Tier1 Development
 
 on:
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       uem-services-plan:
