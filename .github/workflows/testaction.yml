@@ -24,23 +24,23 @@ jobs:
           Write-Output "Cost is $cost 11" 
           Write-Output "COST=${cost}" >> $env:GITHUB_OUTPUT
           $myVariable = "Hello World"
-          Write-Output "myOutput1=${myVariable}" >> $GITHUB_OUTPUT
+          Write-Output "myOutputa=${myVariable}" >> $env:GITHUB_OUTPUT
     outputs:
       COST: ${{ steps.set-powershell.outputs.COST}}
-      MYOUTPUT1: ${{ steps.set-powershell.outputs.myOutput1}}  
+      MYOUTPUTA: ${{ steps.set-powershell.outputs.myOutputa}}  
 
   job2a:
     env:
       COST: ${{ needs.job1a.outputs.COST }}
-      MYOUTPUT1: ${{ needs.job1a.outputs.MYOUTPUT1 }}  
+      MYOUTPUTA: ${{ needs.job1a.outputs.MYOUTPUTA }}  
     needs: job1a
     runs-on: windows-latest
     steps:
       - name: Use powershell Variable
         run: |
           Write-Output "COST: ${{ env.COST }}"
-          Write-Output "MYOUTPUT1: ${{ env.MYOUTPUT1 }}"
-          Write-Output "TEST_STATUS: ${{ env.COST }}  --->  MYOUTPUT: ${{ env.MYOUTPUT1 }}">> $GITHUB_STEP_SUMMARY
+          Write-Output "MYOUTPUTA: ${{ env.MYOUTPUTA }}"
+          Write-Output "TEST_STATUS: ${{ env.COST }}  --->  MYOUTPUTA: ${{ env.MYOUTPUTA }}">> $GITHUB_STEP_SUMMARY
           
   job1:
     runs-on: ubuntu-latest
