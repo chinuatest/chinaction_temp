@@ -1,7 +1,8 @@
-name: Canonical COM-CN
+name: Workflow for Environment Files
 
-on:
-  workflow_call:
+
+on: 
+  workflow_dispatch:
     inputs:
       canonical-branch:
         description: 'Canonical branch'
