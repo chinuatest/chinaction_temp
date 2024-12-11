@@ -251,8 +251,6 @@ jobs:
         name: COM-CN_API Spec Config
         path: "src/AirWatch API/config.json"
         if-no-files-found: ignore
-    - outputs:
-        MAJOR_MINOR_VERSION: ${{ steps.push-canonical-version.outputs.MAJOR_MINOR_VERSION}}
   Check-compilation-and-run-unit-tests-Build-AirWatch-DB-Installer:
     runs-on: winbuild-gh
     defaults:
