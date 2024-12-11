@@ -20,8 +20,8 @@ jobs:
       - name: Set powershell
         id: set-powershell
         run: |
-          $cost = 5.23
-          Write-Output "Cost is " $cost
+          $cost = '5.23'
+          Write-Output "Cost is $cost 11" 
           "COST=${cost}" >> $env:GITHUB_ENV
           $myVariable = "Hello World"
           Write-Output "::set-output name=myOutput::${myVariable}"
