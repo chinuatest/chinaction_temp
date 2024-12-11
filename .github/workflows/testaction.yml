@@ -14,11 +14,45 @@ env:
   env_var: ${{ vars.ENV_CONTEXT_VAR }}
   
 jobs:
+  job1a:
+    runs-on: windows-latest
+    steps:
+      - name: Set powershell
+        id: set-powershell
+        run: |
+          $cost = 5.23
+          Write-Output "Cost is " $cost
+          "COST=${cost}" >> $env:GITHUB_ENV
+          $myVariable = "Hello World"
+          Write-Output "::set-output name=myOutput::${myVariable}"
+    outputs:
+      COST: ${{ steps.set-powershell.outputs.COST}}  
+      MYOUTPUT: ${{ steps.set-powershell.outputs.myOutput}}  
+
+  job2a:
+    env:
+      TEST_STATUS: ${{ needs.job1a.outputs.COST }}
+      MYOUTPUT: ${{ needs.job1a.outputs.MYOUTPUT }}  
+    needs: job1a
+    runs-on: windows-latest
+    steps:
+      - name: Use powershell Variable
+        run: |-
+          Write-Output "TEST_STATUS: ${{ env.TEST_STATUS }}"
+          Write-Output "MYOUTPUT: ${{ env.MYOUTPUT }}"
+          "TEST_STATUS: ${{ env.TEST_STATUS }}  --->  MYOUTPUT: ${{ env.MYOUTPUT }}">> $GITHUB_STEP_SUMMARY
+          
   job1:
     runs-on: ubuntu-latest
     steps:
       - name: Set Variable
         run: echo "MY_VARIABLEX=my_value1" >> $GITHUB_ENV #this is workflow scoped
+      - name: Set powershell
+        run: |
+          $cost = 5.23
+
+          $myVariable = "Hello World"
+          Write-Output "::set-output name=myOutput::${myVariable}"
 
   job2:
     needs: job1
