@@ -1,146 +1,860 @@
-name: Workflow for Environment Files
+name: Canonical COM-CN
 
-  
-on: 
-  workflow_dispatch
+on:
+  workflow_call:
+    inputs:
+      canonical-branch:
+        description: 'Canonical branch'
+        type: string
+        default: 'main'
+      airwatch-ci-upload-branch:
+        description: 'Airwatch-ci-upload-to-artifactory branch'
+        type: string
+        default: 'main'
+      groovy-build-pipeline-branch:
+        description: 'Groovy-build-pipeline branch'
+        type: string
+        default: 'main'
+      canonical-dev-qe-clusters-branch:
+        description: 'Canonical-dev-qe-clusters branch'
+        type: string
+        default: 'main'
+      srp-provenance-branch:
+        description: 'Srp-provenance branch'
+        type: string
+        default: 'main'
 
 env:
-  BAMBOO_BUILDNUMBER: '${{ github.workflow }}-${{ github.job }}-${{ github.run_id }}'
-  REF: "${{ github.ref }}"
-  TARGET_BRANCH: ${REF#refs/heads/}
-  BALANCE: 35
-  COLOR: "Blue"
-  # Setting an environment variable with the value of a configuration variable
-  env_var: ${{ vars.ENV_CONTEXT_VAR }}
-  
+  ref: ${{ github.head_ref || github.ref }}
+  PLAN_KEY: 'COM-CN'
+  BUILD_NUMBER: '${{ github.run_id }}${{ github.run_attempt }}'
+  BUILD_KEY: 'COM-CN-${{ github.run_id }}${{ github.run_attempt }}'
+  ORG_NAME: 'euc-uem'
+  REPO_NAME: 'euc-uem/canonical'
+  ALLOW_MULTIPLE_BUILDS: False
+  REPOSITORY_REVISION_NUMBER: ${{ github.sha }}
+
 jobs:
-  job1a:
-    runs-on: windows-latest
+  Pre-Configure-Pre-Configure:
+    runs-on: winbuild-gh
+    defaults:
+      run:
+        shell: PowerShell
     steps:
-      - name: Set powershell
-        id: set-powershell
-        run: |
-          $cost = '5.23'
-          Write-Output "Cost is $cost 11" 
-          Write-Output "COST=${cost}" >> $env:GITHUB_OUTPUT
-          $myVariable = "Hello World"
-          Write-Output "myOutputa=${myVariable}" >> $env:GITHUB_OUTPUT
-    outputs:
-      COST: ${{ steps.set-powershell.outputs.COST}}
-      MYOUTPUTA: ${{ steps.set-powershell.outputs.myOutputa}}  
+    - name: Clean AWInstaller directory
+      run:  Remove-Item -Path ..\AWInstaller -Force
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - name: Pre-Configure Echo
+      run: Write-Host "Pre-Configure"
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-eng/groovy-build-pipeline
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.groovy-build-pipeline-branch }}'
+        path: pipeline
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-eng/airwatch-ci-upload-to-artifactory
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.airwatch-ci-upload-branch }}'
+        path: "artifactoryScripts"
+    - name: Clean working directory (Remove)
+      run: rm -rf ${{ github.workspace }}/*
+      shell: bash
+    - name: Create Needed directories
+      run: ${{ github.workspace }}\artifactoryScripts\create_needed_directories.ps1
+    - name: Create common URL json
+      run: ${{ github.workspace }}\artifactoryScripts\create_common_url.ps1 -branchName ${{ inputs.canonical-branch }} -artifactoryBaseUrl ${{ vars.AW_ARTIFACTORY_BASE_URL }} -tempBucket ${{ vars.AW_ARTIFACTORY_TEMP_BUCKET_REPO }} -revisionNumber ${{ env.REPOSITORY_REVISION_NUMBER }} -buildNumber ${{ env.BUILD_NUMBER }}
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_Common URL
+        path: "artifacts/*"
+        if-no-files-found: ignore
+  Check-compilation-and-run-unit-tests-Build-AirWatch-App-Installer:
+    runs-on: winbuild-gh
+    defaults:
+      run:
+        shell: PowerShell
+    needs:
+    - Pre-Configure-Pre-Configure
+    steps:
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - name: App Installer ECHO
+      run: Write-Host "App Installer"
+    - name: Delete TempASP Folder (RESKIPTAG)
+      run: |
+        $pathsToRemove = @(
+            "${{ github.workspace }}\TmpASP\TmpASPDelete", "${{ github.workspace }}\TmpASP\TmpASPDelete64",
+            "${{ github.workspace }}\agt01\AWInstaller", "${{ github.workspace }}\src"
+        )        
+        foreach ($path in $pathsToRemove) {
+            if (Test-Path $path) {
+                Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        
+        # Recreate directories
+        $pathsToCreate = @(
+            "${{ github.workspace }}\TmpASP\TmpASPDelete", "${{ github.workspace }}\TmpASP\TmpASPDelete64"
+        )        
+        foreach ($path in $pathsToCreate) {
+            New-Item -Path $path -ItemType Directory -Force | Out-Null
+        }
+        
+        # Clear Temp directory
+        $localTempPath = "$env:LOCALAPPDATA\Temp"
+        if (Test-Path $localTempPath) {
+            Remove-Item -Path "$localTempPath\*" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        
+        $myProcess = "xunit.console.exe"
+        $process = Get-Process -Name $myProcess -ErrorAction SilentlyContinue
+        if ($process) {
+            Stop-Process -Name $myProcess -Force
+        } else {
+            Exit 0
+        }
+    - name: Create needed directories
+      run: |        
+        ${{ github.workspace }}\artifactoryScripts\create_needed_directories.ps1
+    - name: Download BTA-ACBT
+      run: |
+        New-Item -Path "${{ github.workspace }}" -Name "AWInstaller" -ItemType "directory"
+        $source = '${{ vars.AW_ARTIFACTORY_BASE_URL }}\build-drop-aw\BTA-ACBT.jar'
+        $destination = '${{ github.workspace }}/AWInstaller/BTA-ACBT.jar'
+        $username = '${{ env.ORG_ARTIFACTORY_CONSOLE_API_USERNAME }}'
+        $password = '${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }}'
+        $secPassword = ConvertTo-SecureString $password -AsPlainText -Force
+        $credObject = New-Object System.Management.Automation.PSCredential ($username, $secPassword)
+        Invoke-WebRequest -Uri $source -OutFile $destination -Credential $credObject
+    - name: Clean Cache
+      run: npm cache clean --force
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ vars.NODEJS_VERSION }}
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-uem/canonical
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.canonical-branch }}'
+        path: "src"
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-eng/airwatch-ci-upload-to-artifactory
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.airwatch-ci-upload-branch }}'
+        path: "artifactoryScripts"
+    - uses: actions/download-artifact@v4
+      with:
+        name: COM-CN_Common URL
+    - name: Run Msbuild App Installer
+      continue-on-error: true
+      run: |   
+        Write-Host "Print PATH App installer:"
+        $env:Path -split ';'
+        
+        $env:bamboo_planName = "${{ env.PLAN_KEY }}"
+        $env:bamboo_username = "${{ env.ORG_BAMBOO_USER }}"
+        $env:bamboo_password = "${{ env.ORG_BAMBOO_PASSWORD }}"
+        $env:bamboo_artifactory_password = "${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }}"
+        $env:bamboo_build_all_jobs = "${{ vars.BUILD_ALL_JOBS }}"        
+        $env:bamboo_working_directory = "${{ github.workspace }}"
+        $env:bamboo_aw_app_awinstaller_app = "${{ vars.AW_APP_AWINSTALLER_APP }}"
+        $env:bamboo_buildkey = "${{ env.BUILD_KEY }}"
+        $env:bamboo_buildResultKey = "${{ env.BUILD_KEY }}"
+        $env:bamboo_planRepository_branchName = "${{ inputs.canonical-branch }}"
+        $env:bamboo_planRepository_1_branchName = "${{ inputs.canonical-branch }}"
+        $env:bamboo_selfsignpassword = "${{ env.ORG_SELF_SIGN_PASSWORD }}"
+        
+        $file_path = "${{ github.workspace }}\src\TeamBuildTypes\Bamboo Build\BambooBuild.proj"
+        $does_file_exist = Test-Path $file_path
+        Write-Host "Does ($file_path) exist: $does_file_exist" 
+        
+        Install-Module -Name Invoke-MsBuild -Force
+        Import-Module Invoke-MsBuild
+        Invoke-MsBuild -Path $file_path -MsBuildParameters "/p:Configuration=Release /m /nr:false"
 
-  job2a:
+    - name: Generate buildInfo.json (RESKIPTAG)
+      run: |
+        $env:bamboo_build_working_directory = "${{ github.workspace }}"
+        $env:bamboo_planRepository_1_revision = "${{ env.REPOSITORY_REVISION_NUMBER }}"
+        $env:bamboo_planKey = "${{ env.PLAN_KEY }}"
+        $env:bamboo_buildNumber = "${{ env.BUILD_NUMBER }}"
+        ${{ github.workspace }}\src\Tools\GenerateBuildInfo\GenerateBuildInfo.ps1
+    - name: Push Canonical Versions to variable file
+      id: push-canonical-version
+      run: |
+        $json = Get-Content .\artifacts\buildInfo.json | Out-String | ConvertFrom-Json
+        $version=$json.'app-version'
+        Write-Host "version -> $version"
+        $rels = $version.split('.')
+        # Only considering [major.minor] version
+        $majorMinorVersion = $rels[0]+ "." + $rels[1]
+        Set-Content -Path variables.txt -Value "version=$majorMinorVersion"
+        Write-Host 'majorMinorVersion:' $majorMinorVersion
+        Write-Output "MAJOR_MINOR_VERSION=${majorMinorVersion}" >> $env:GITHUB_OUTPUT
+    - name: Upload artifacts to artifactory
+      run: ${{ github.workspace }}\artifactoryScripts\upload_builds_to_artifactory.ps1 -branchName ${{ inputs.canonical-branch }} -artifactoryUser ${{ env.ORG_ARTIFACTORY_CONSOLE_API_USERNAME }} -artifactoryPwd ${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }} -installerType "Application"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Msbuild_BambooBuild_logs
+        path: "C:\\Users\\svc.aw-bamboo2\\AppData\\Local\\Temp\\BambooBuild*"
+        if-no-files-found: ignore
+        overwrite: true
+    - uses: actions/upload-artifact@v4
+      with:
+        name: BTA-ACBT.jar
+        path: "AWInstaller/*"
+        if-no-files-found: ignore
+        overwrite: true
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_AirWatch Build Artifacts
+        path: "artifacts/*"
+        if-no-files-found: ignore
+        overwrite: true
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_APP URLs
+        path: "stage_artifacts/*"
+        if-no-files-found: ignore
+        overwrite: true
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_Precompile task logs
+        path: "bin/Release/*.log"
+        if-no-files-found: ignore
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_Signing Validation Logs
+        path: signature_validation_results.log
+        if-no-files-found: ignore
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_API Spec Config
+        path: "src/AirWatch API/config.json"
+        if-no-files-found: ignore
+    - outputs:
+        MAJOR_MINOR_VERSION: ${{ steps.push-canonical-version.outputs.MAJOR_MINOR_VERSION}}
+  Check-compilation-and-run-unit-tests-Build-AirWatch-DB-Installer:
+    runs-on: winbuild-gh
+    defaults:
+      run:
+        shell: PowerShell
+    needs:
+    - Pre-Configure-Pre-Configure
+    steps:
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - uses: actions/download-artifact@v4
+      with:
+        name: COM-CN_Common URL
+    - name: DB Installer
+      run: Write-Host "DB Installer"
+    - name: Delete AWInstaller DB Folder (RESKIPTAG)
+      run: |
+        $pathToRemove = "${{ github.workspace }}\..\AWInstaller"        
+        # Check and remove the directory if it exists
+        if (Test-Path $pathToRemove) {
+            Remove-Item -Path $pathToRemove -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        
+        $myProcess = "xunit.console.exe"        
+        # Check if the process is running
+        $process = Get-Process -Name $myProcess -ErrorAction SilentlyContinue
+        if ($process) {
+            # Terminate the process if running
+            Stop-Process -Name $myProcess -Force
+        } else {
+            # Exit script if the process is not running
+            Exit 0
+        }
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-uem/canonical
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.canonical-branch }}'
+        path: "src"
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-eng/airwatch-ci-upload-to-artifactory
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.airwatch-ci-upload-branch }}'
+        path: "artifactoryScripts"
+    - name: Create Needed Directories
+      run: ${{ github.workspace }}\artifactoryScripts\create_needed_directories.ps1
+    - name: Run msbuild DB installer
+      continue-on-error: true
+      shell: PowerShell
+      run: |
+        Write-Host "Print PATH DB installer:"
+        $env:Path -split ';'
+        
+        $env:bamboo_planName = "${{ env.PLAN_KEY }}"
+        $env:bamboo_username = "${{ env.ORG_BAMBOO_USER }}"
+        $env:bamboo_password = "${{ env.ORG_BAMBOO_PASSWORD }}"
+        $env:bamboo_artifactory_password = "${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }}"
+        $env:bamboo_build_all_jobs = "${{ vars.BUILD_ALL_JOBS }}"
+        $env:bamboo_selfsignpassword = "${{ env.ORG_SELF_SIGN_PASSWORD }}"
+        
+        $env:bamboo_working_directory = "${{ github.workspace }}"
+        $env:bamboo_aw_app_awinstaller_db = "https://artifactory.air-watch.com/artifactory/awinstaller-binaries-local/AWInstallerDB.zip"
+        $env:bamboo_buildkey = "${{ env.BUILD_KEY }}"
+        $env:bamboo_planRepository_branchName = "${{ inputs.canonical-branch }}"
+        Install-Module -Name Invoke-MsBuild -Force
+        Import-Module Invoke-MsBuild
+        Invoke-MsBuild -Path "${{ github.workspace }}\src\Database\BuildAndLocalization\AirWatch Install DB Build\BambooBuild.proj" -MsBuildParameters "/p:Configuration=Release /m /nr:false"
+
+    - name: Generate buildInfo.json (RESKIPTAG)
+      run: |
+        $env:bamboo_build_working_directory = "${{ github.workspace }}"
+        $env:bamboo_planRepository_1_revision = "${{ env.REPOSITORY_REVISION_NUMBER }}"
+        $env:bamboo_planKey = "${{ env.PLAN_KEY }}"
+        $env:bamboo_buildNumber = "${{ env.BUILD_NUMBER }}"
+        ${{ github.workspace }}\src\Tools\GenerateBuildInfo\GenerateBuildInfo.ps1
+    - name: Upload DB artifacts to artifactory
+      shell: PowerShell
+      run: ${{ github.workspace }}\artifactoryScripts\upload_builds_to_artifactory.ps1 -branchName ${{ inputs.canonical-branch }} -artifactoryUser ${{ env.ORG_ARTIFACTORY_CONSOLE_API_USERNAME }} -artifactoryPwd ${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }} -installerType "Database"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_AirWatch DB Build Artifacts
+        path: "artifacts/*"
+        if-no-files-found: ignore
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_DB URLs
+        path: "stage_artifacts/*"
+        if-no-files-found: ignore
+  Check-compilation-and-run-unit-tests-Build-and-Unit-Test-Application:
+    runs-on: winbuild-gh
+    defaults:
+      run:
+        shell: PowerShell
+    needs:
+    - Pre-Configure-Pre-Configure
+    steps:
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - name: Delete TempASP Folder
+      run: |
+        $pathsToRemove = @(
+            "${{ github.workspace }}\TmpASP\TmpASPDelete", "${{ github.workspace }}\TmpASP\TmpASPDelete64",
+            "${{ github.workspace }}\agt01\AWInstaller"
+        )        
+        # Remove directories if they exist
+        foreach ($path in $pathsToRemove) {
+            if (Test-Path $path) {
+                Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
+            }
+        }
+        
+        # Create directories
+        $pathsToCreate = @(
+            "${{ github.workspace }}\TmpASP\TmpASPDelete",
+            "${{ github.workspace }}\TmpASP\TmpASPDelete64"
+        )        
+        foreach ($path in $pathsToCreate) {
+            New-Item -Path $path -ItemType Directory -Force | Out-Null
+        }
+        
+        # Clear the local Temp directory
+        $localTempPath = "$env:LOCALAPPDATA\Temp"
+        if (Test-Path $localTempPath) {
+            Remove-Item -Path "$localTempPath\*" -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        
+        $myProcess = "xunit.console.exe"        
+        # Check if the process is running and terminate it if necessary
+        $process = Get-Process -Name $myProcess -ErrorAction SilentlyContinue
+        if ($process) {
+            Stop-Process -Name $myProcess -Force
+        } else {
+            Exit 0
+        }
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-uem/canonical
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.canonical-branch }}'
+        path: "src"
+    - name: Prepare inject variables
+      shell: bash
+      run: |
+        echo 'build_key_app_unit_tests=${{ env.PLAN_KEY }}-${{ env.BUILD_NUMBER }}' > build_key_app_unit_tests.txt
+        echo "Checking files"
+        pwd
+#     # Only 'Local' scope is supported for inject-variables. The following snippet can be uncommented and used but will be scoped to the current job.
+    - name: Inject Bamboo variables
+      continue-on-error: true
+      run: |
+        echo "Checking files 2"
+        ls -a
+        pwd
+         while IFS= read -r line || [[ -n "$line" ]]; do
+           if [[ -n "$line" ]]; then
+             key=$(echo "inject_$line" | cut -d= -f1)
+             value=$(echo "$line" | cut -d= -f2)
+             echo "$key=$value" >> "$GITHUB_ENV"
+             echo "UT -> key:$key value:$value"
+           fi
+         done < build_key_app_unit_tests.txt
+      shell: bash
+    - name: Clean cache
+      run: npm cache clean --force
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ vars.NODEJS_VERSION }}
+    - name: Build App (PS script)
+      run: |
+        $env:bamboo_planName = "${{ env.PLAN_KEY }}"
+        $env:bamboo_username = "${{ env.ORG_BAMBOO_USER }}"
+        $env:bamboo_password = "${{ env.ORG_BAMBOO_PASSWORD }}"
+        $env:bamboo_artifactory_password = "${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }}"
+        $env:bamboo_planRepository_1_branchName = "${{ inputs.canonical-branch }}"
+        $env:bamboo_build_all_jobs = "${{ vars.BUILD_ALL_JOBS }}"
+        
+        $env:bamboo_working_directory = "${{ github.workspace }}"
+        $env:bamboo_aw_tunnel_microservice_db_url = "${{ vars.AW_TUNNEL_MICROSERVICE_DB_URL }}"
+        $env:bamboo_buildkey = "${{ env.BUILD_KEY }}"
+        ${{ github.workspace }}\src\TeamBuildTypes\Bamboo_Build_Compile_Only\compile_branch.ps1 App
+    - name: Upload Unit Test App Results xml file to artifactory - CA for ATL-21381
+      run: python ${{ github.workspace }}\src\bamboo-specs\scripts\upload_unit_test_results.py "${{ env.REPOSITORY_REVISION_NUMBER }}" "${{ env.ORG_ARTIFACTORY_CONSOLE_API_USERNAME }}" "${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }}" "${{ env.BUILD_NUMBER }}" "${{ env.BUILD_KEY }}" "${{ github.workspace }}\TestResult\BasicResult.xml"
+      continue-on-error: true
+      if: always()
+#    - name: NUnit Test Result
+#      uses: EnricoMi/publish-unit-test-result-action@v2.12.0
+#      if: always()
+#      with:
+#        nunit_files: "**/TestResult/*.xml"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_APP Test Result XML
+        path: "**/TestResult/*.xml"
+        if-no-files-found: error
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_Logs
+        path: "**/logs/*.csv"
+        if-no-files-found: ignore
+
+  Check-compilation-and-run-unit-tests-Build-and-Unit-Test-DB:
+    runs-on: winbuild-gh
+    defaults:
+      run:
+        shell: PowerShell
+    needs:
+    - Pre-Configure-Pre-Configure
+    steps:
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - name: Kill xunit process
+      run: |
+        $myProcess = "xunit.console.exe"        
+        # Check if the process is running
+        $process = Get-Process -Name $myProcess -ErrorAction SilentlyContinue
+        if ($process) {
+            # Terminate the process if it's running
+            Stop-Process -Name $myProcess -Force
+        } else {
+            # Exit script if the process is not running
+            Exit 0
+        }
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-uem/canonical
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.canonical-branch }}'
+        path: "src"
+    - name: Prepare inject variables
+      run: |
+        echo 'build_key_db_unit_tests=${{ env.PLAN_KEY }}-${{ env.BUILD_NUMBER }}'> build_key_db_unit_tests.txt
+        echo "Checking files"
+        pwd
+    - name: Build DB (PS script)
+      run: |
+        $env:bamboo_planName = "${{ env.PLAN_KEY }}"
+        $env:bamboo_username = "${{ env.ORG_BAMBOO_USER }}"
+        $env:bamboo_password = "${{ env.ORG_BAMBOO_PASSWORD }}"
+        $env:bamboo_artifactory_password = "${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }}"
+        $env:bamboo_planRepository_1_branchName = "${{ inputs.canonical-branch }}"
+        $env:bamboo_build_all_jobs = "${{ vars.BUILD_ALL_JOBS }}"
+        
+        $env:bamboo_working_directory = "${{ github.workspace }}"
+        $env:bamboo_aw_tunnel_microservice_db_url = "${{ vars.AW_TUNNEL_MICROSERVICE_DB_URL }}"
+        $env:bamboo_buildkey = "${{ env.BUILD_KEY }}"
+        
+        ${{ github.workspace }}\src\TeamBuildTypes\Bamboo_Build_Compile_Only\compile_branch.ps1 DB
+#    - name: Publish test results
+#      uses: EnricoMi/publish-unit-test-result-action@v2.12.0
+#      if: always()
+#      with:
+#        junit_files: "**/PublishTest/AirWatchDB_UnitTestsResult.xml"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_Deploy Report
+        path: "artifacts/*.xml"
+        if-no-files-found: ignore
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_DB Test Result XML
+        path: "**/PublishTest/AirWatchDB_UnitTestsResult.xml"
+        if-no-files-found: error
+  Check-compilation-and-run-unit-tests-Javascript-Lint-and-Unit-Test:
+    runs-on: winbuild-gh
+    needs:
+    - Pre-Configure-Pre-Configure
+    steps:
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ vars.NODEJS_VERSION }}
+    - name: Kill xunit process
+      run: |
+        $myProcess = "xunit.console.exe"        
+        # Check if the process is running
+        $process = Get-Process -Name $myProcess -ErrorAction SilentlyContinue
+        if ($process) {
+            # Terminate the process if it's running
+            Stop-Process -Name $myProcess -Force
+        } else {
+            # Exit script if the process is not running
+            Exit 0
+        }
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-uem/canonical
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.canonical-branch }}'
+        path: "src"
+    - name: Create Needed Directories
+      run: |
+        # Creates artifact directory if it does not exist.
+        # =====File Paths=====
+        $baseBuildDirectory = "${{ github.workspace }}\"
+        $artifactDropDirectory = $baseBuildDirectory + 'artifacts\'
+        $srcDirectory = $baseBuildDirectory + 'src\'
+        # =====File Paths=====
+        # Ensure artifact directory exists.
+        if ((Test-Path $artifactDropDirectory) -eq "True")
+        {
+            Write-Host "Artifact directory already exists."
+            # Remove everything in the .\artifacts directory.
+            Remove-Item ($baseBuildDirectory + 'artifacts\*') -force -verbose -recurse
+        }
+        else
+        {
+            Write-Host "Artifact directory does not exist."
+            New-Item $artifactDropDirectory -itemtype directory
+            Write-Host "Created directory."
+        }
+        # Ensure src directory exists.
+        if ((Test-Path $srcDirectory) -eq "True")
+        {
+            Write-Host "src directory already exists."
+        }
+        else
+        {
+            Write-Host "Artifact directory does not exist."
+            New-Item $srcDirectory -itemtype directory
+            Write-Host "Created directory."
+        }
+    - name: clean cache.
+      run: npm cache clean --force
+    - name: Install dependencies
+      run: npm install
+      working-directory: "src/Javascript Unit Tests"
+    - name: Perform liniting
+      run: npm run vet
+      working-directory: "src/Javascript Unit Tests"
+    - name: Run the unit tests
+      run: npm run test
+      working-directory: "src/Javascript Unit Tests"
+#    - name: Publish test results
+#      uses: EnricoMi/publish-unit-test-result-action@v2.12.0
+#      if: always()
+#      with:
+#        junit_files: "**/testresults/**/*.xml"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_AirWatch Build Artifacts
+        path: "artifacts/.*"
+        if-no-files-found: ignore
+        overwrite: true
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_Test_Results
+        path: "testresults/.*"
+        if-no-files-found: ignore
+        overwrite: true
+  Test-and-verify-pacts-Pact-Verification:
+    runs-on: winbuild-gh
     env:
-      COST: ${{ needs.job1a.outputs.COST }}
-      MYOUTPUTA: ${{ needs.job1a.outputs.MYOUTPUTA }}  
-    needs: job1a
-    runs-on: windows-latest
+      ARTIFACT_VERSION: ${{ needs.Check-compilation-and-run-unit-tests-Build-AirWatch-App-Installer.outputs.MAJOR_MINOR_VERSION }}
+    needs:
+    - Pre-Configure-Pre-Configure
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-DB
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-DB-Installer
+    - Check-compilation-and-run-unit-tests-Javascript-Lint-and-Unit-Test
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-Application
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-App-Installer
     steps:
-      - name: Use powershell Variable
-        run: |
-          Write-Output "COST: ${{ env.COST }}"
-          Write-Output "MYOUTPUTA: ${{ env.MYOUTPUTA }}"
-          Write-Output "TEST_STATUS: ${{ env.COST }}  --->  MYOUTPUTA: ${{ env.MYOUTPUTA }}">> $GITHUB_STEP_SUMMARY
-          
-  job1:
-    runs-on: ubuntu-latest
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - name: Clean working directory
+      run: rm -rf ${{ github.workspace }}/*
+      shell: bash
+    - name: Clean Cache
+      run: npm cache clean --force
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-uem/canonical
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.canonical-branch }}'
+        path: canonical
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ vars.NODEJS_VERSION }}
+    - name: Skip Pact Verification
+      shell: bash
+      run: |
+        cd canonical
+        closest_ancestor=""
+        closest_distance=-1
+        current_branch=${{ inputs.canonical-branch }}
+        echo "current_branch: $current_branch"
+        calculate_distance() {
+            local branch_name=$1
+            local common_ancestor=$2
+            git rev-list --count "$common_ancestor..$branch_name"
+        }
+        for branch_name in "origin/release/22.10.0.0" "origin/release/22.12.0.0" "origin/release/23.2.0.0" "origin/main"; do
+            if git rev-parse --verify --quiet "$branch_name" > /dev/null; then
+                common_ancestor=$(git merge-base "$branch_name" "$current_branch")
+                echo "common_ancestor: $common_ancestor"
+                distance=$(calculate_distance "$current_branch" "$common_ancestor")
+                echo "distance: $distance"
+                if [ $distance -ge 0 ] && ( [ $closest_distance -eq -1 ] || [ $distance -lt $closest_distance ]); then
+                    closest_ancestor="$branch_name"
+                    echo "closest_ancestor: $closest_ancestor"
+                    closest_distance=$distance
+                    echo "closest_distance: $closest_distance"
+                fi
+            fi
+        done
+        if [ "$closest_ancestor" = "origin/main" ]; then
+            echo "closest_ancestor is main"
+            skip_pact_verfication="false"
+            echo "$skip_pact_verfication" > pact_job_variable.txt
+            exit 0
+        else
+            echo "closest_ancestor is not main"
+            skip_pact_verfication="true"
+            echo "$skip_pact_verfication" > pact_job_variable.txt
+        fi
+        echo "Checking files"
+        ls -a
+        pwd
+    - name: Run pact verification
+      shell: bash
+      continue-on-error: true
+      run: |
+        #! /bin/sh
+        skip_pact=$(cat canonical/pact_job_variable.txt)
+        if [ "$skip_pact" = false ]; then
+            echo "Run PACT Verification"
+            docker rm -f $(docker ps -a -q)
+            docker rmi -f $(docker images -a -q)
+            docker system prune --volumes -f
+            docker build -f ./canonical/Tools/ContractTesting/Dockerfile  -t pact-verificaton .
+            docker run -v ./canonical:/app/canonical -e "USER=${{ env.ORG_BAMBOO_USER }}" -e "APIKEY=${{ env.ORG_BAMBOO_PASSWORD }}" -e "VERSION=${{ env.ARTIFACT_VERSION }}" -e "BRANCHNAME=${{ inputs.canonical-branch }}" -e "BUILDNUMBER=${{ env.BUILD_NUMBER }}" pact-verificaton
+        else
+            echo "Skip PACT Verification"
+        fi
+    - name: Clean working directory
+      run: rm -rf ${{ github.workspace }}/*
+      shell: bash
+      if: always()
+  Generate-Artifactory-URLs-Generate-Artifactory-URLs:
+    runs-on: winbuild-gh
+    defaults:
+      run:
+        shell: PowerShell
+    needs:
+    - Pre-Configure-Pre-Configure
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-DB
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-DB-Installer
+    - Check-compilation-and-run-unit-tests-Javascript-Lint-and-Unit-Test
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-Application
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-App-Installer
+    - Test-and-verify-pacts-Pact-Verification
     steps:
-      - name: Set Variable
-        run: echo "MY_VARIABLEX=my_value1" >> $GITHUB_ENV #this is workflow scoped
-      - name: Set powershell
-        run: |
-          $cost = 5.23
-
-          $myVariable = "Hello World"
-          Write-Output "::set-output name=myOutput::${myVariable}"
-
-  job2:
-    needs: job1
-    runs-on: ubuntu-latest
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-eng/airwatch-ci-upload-to-artifactory
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.airwatch-ci-upload-branch }}'
+        path: artifactoryScripts
+    - uses: actions/download-artifact@v4
+      with:
+        name: COM-CN_DB URLs
+    - uses: actions/download-artifact@v4
+      with:
+        name: COM-CN_APP URLs
+    - name: Created needed directories
+      run: ${{ github.workspace }}\artifactoryScripts\create_needed_directories.ps1
+    - name: Generate Artifacts URLs json
+      run: artifactoryScripts/generate_artifacts_url_json.ps1 -branchName ${{ inputs.canonical-branch }}
+    - uses: actions/upload-artifact@v4
+      with:
+        name: COM-CN_Artifact URLs json
+        path: "artifacts/*"
+        if-no-files-found: ignore
+  Code-Provenance-Code-Provenance:
+    runs-on: winbuild-gh
+    needs:
+    - Pre-Configure-Pre-Configure
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-DB
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-DB-Installer
+    - Check-compilation-and-run-unit-tests-Javascript-Lint-and-Unit-Test
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-Application
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-App-Installer
+    - Test-and-verify-pacts-Pact-Verification
+    - Generate-Artifactory-URLs-Generate-Artifactory-URLs
     steps:
-      - name: Use Variable
-        run: |-
-          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}"
-          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}">> $GITHUB_STEP_SUMMARY
-        
-  set_and_use_env_vars:
-    runs-on: ubuntu-latest
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-eng/srp-provenance
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.srp-provenance-branch }}'
+        path: srp-tools
+    - name: Run Provenance
+      run: .\build_srp_provenance.ps1 "'${{ env.PLAN_KEY }}'" ${{ env.PLAN_KEY }}-${{ env.BUILD_NUMBER }} ${{ env.BUILD_NUMBER }} ${{ env.ORG_SRP_CLIENT_ID }} ${{ env.ORG_SRP_CLIENT_SECRET }} ${{ env.REPOSITORY_REVISION_NUMBER }} ${{ inputs.canonical-branch}}
+      shell: PowerShell
+      working-directory: srp-tools
+  Post-Build-Tasks-Unit-Tests---Upload-Results-to-Artifactory-and-JIRA-tickets-for-failures:
+    runs-on: winbuild-gh
+    if: always()
+    needs:
+    - Pre-Configure-Pre-Configure
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-DB
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-DB-Installer
+    - Check-compilation-and-run-unit-tests-Javascript-Lint-and-Unit-Test
+    - Check-compilation-and-run-unit-tests-Build-and-Unit-Test-Application
+    - Check-compilation-and-run-unit-tests-Build-AirWatch-App-Installer
+    - Test-and-verify-pacts-Pact-Verification
+    - Generate-Artifactory-URLs-Generate-Artifactory-URLs
+    - Code-Provenance-Code-Provenance
     steps:
-      - name: Set environment variable
-        run: |- 
-          echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
-          echo "BALANCE=80" >> $GITHUB_ENV
-          echo "SIZE=Large" >> $GITHUB_ENV
-          echo "Color = $env.COLOR"
-          export COLOR="RED11"
-          echo "env.COLOR=Red1" >> $GITHUB_ENV
-          echo "$env.COLOR=Red2" >> $GITHUB_ENV
-          echo "MY_VARIABLE=my_value" >> $GITHUB_ENV #this is workflow scoped
-          echo "COLOR=Red" >> $GITHUB_ENV
-      - name: Set color
-        id: color-selector
-        run: echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
-      - name: Get color
-        env:
-          SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
-        run: echo "The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
-
-      - name: Use environment variable
-        run: |-
-          echo "The value of MY_ENV_VAR is $MY_ENV_VAR"
-          echo "Balance : ${{ env.BALANCE }} "
-          echo "SIZE : $SIZE "
-          echo "$BALANCE=80" >> $GITHUB_ENV
-          echo "$env.BALANCE=81" >> $GITHUB_ENV
-          echo "COLORa : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
-          echo "1this is workflow scoped : ${{ env.MY_VARIABLE }} ">> $GITHUB_STEP_SUMMARY
-
-      - name: Generate File
-        run: echo "Hello, World!" > hello.txt
-        
-      - name: Upload File
-        uses: actions/upload-artifact@v4
-        with:
-          name: my-artifact
-          path: hello.txt
-    outputs:
-      my_color1: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
-      
-  set_and_use_env_vars2:
-    needs: set_and_use_env_vars
-    runs-on: ubuntu-latest
-    steps:
-      - name: Use environment variable
-        run: |-
-          echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
-          echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
-          echo "SIZE : $SIZE ">> $GITHUB_STEP_SUMMARY
-          echo "COLOR5 : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
-          echo "TARGET_BRANCH: ${{ env.TARGET_BRANCH }}">> $GITHUB_STEP_SUMMARY
-          echo "Balance: ${{ env.BALANCE }}">> $GITHUB_STEP_SUMMARY
-          echo "BAMBOO_BUILDNUMBER: ${{ env.BAMBOO_BUILDNUMBER }}">> $GITHUB_STEP_SUMMARY
-          echo "BUILDNUMBER: ${{ github.workflow }}-${{ github.job }}-${{ github.run_id }} ">> $GITHUB_STEP_SUMMARY
-          echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "2this is workflow scoped : ${{ env.MY_VARIABLE }} ">> $GITHUB_STEP_SUMMARY
-          echo "COLORa2 : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
-          
-      - name: Download File
-        uses: actions/download-artifact@v4
-        with:
-          name: my-artifact
-      - name: Use File
-        run: cat hello.txt
-        
-      - name: Set Output
-        id: step1
-        run: echo "::set-output name=my_output::my_value"
-      - name: Use Output
-        run: echo "${{ steps.step1.outputs.my_output }}"
-      - name: Get color
-        env:
-          SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
-          MY_COLOR : ${{ needs.set_and_use_env_vars.outputs.my_color1 }}
-        run: |-
-          echo "V2 The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
-          echo "V3 color is $MY_COLOR -> ">> $GITHUB_STEP_SUMMARY
-          
+    - name: Load Secrets
+      id: secrets
+      uses: euc-uem/uem-build/vault_secrets@main
+      with:
+        ws1_uem_vault_url: ${{ vars.WS1_UEM_VAULT_URL }}
+        ws1_uem_vault_role_id: ${{ secrets.ORG_WS1_UEM_VAULT_ROLE_ID }}
+        ws1_uem_vault_secret_id: ${{ secrets.ORG_WS1_UEM_VAULT_SECRET_ID }}
+        org_name: ${{ env.ORG_NAME }}
+        repo_name: ${{ env.REPO_NAME }}
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-eng/groovy-build-pipeline
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.groovy-build-pipeline-branch }}'
+    - uses: actions/checkout@v4
+      with:
+        repository: euc-uem/canonical
+        token: '${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}'
+        ref: '${{ inputs.canonical-branch }}'
+        path: "canonical"
+    - uses: actions/download-artifact@v4
+      with:
+        name: COM-CN_DB Test Result XML
+        path: "output"
+        merge-multiple: true
+    - uses: actions/download-artifact@v4
+      with:
+        name: COM-CN_APP Test Result XML
+        path: "output"
+        merge-multiple: true
+    - name: Run ticket creation step - Failed App Unit Tests
+      shell: bash
+      run: |
+        export BUILD_WORKING_DIR=${{ github.workspace }} BUILD_NUMBER=${{ env.BUILD_NUMBER }} BAMBOO_USERNAME=${{ env.ORG_BAMBOO_USER }} BAMBOO_PASSWORD=${{ env.ORG_BAMBOO_PASSWORD }} ARTIFACTORY_USERNAME=${{ env.ORG_ARTIFACTORY_CONSOLE_API_USERNAME }} ARTIFACTORY_PASSWORD=${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }} JIRA_USERNAME=${{ env.ORG_JIRA_USERNAME }} JIRA_TOKEN=${{ env.ORG_JIRA_TOKEN_SECRET }} GITHUB_TOKEN=${{ env.ORG_SVC_BOT_WS1_GITHUB_PAT }}
+        canonical/bamboo-specs/scripts/create_jira_tickets.sh unit create-jira-tickets-for-failed-unit-tests create-jira-tickets-for-tests-exceeding-time-limit
+      if: inputs.canonical-branch == 'main'
+    - name: Upload Unit Test DB Results xml file to artifactory
+      run: python canonical/bamboo-specs/scripts/upload_unit_test_results.py "${{ env.REPOSITORY_REVISION_NUMBER }}" "${{ env.ORG_ARTIFACTORY_CONSOLE_API_USERNAME }}" "${{ env.ORG_ARTIFACTORY_CONSOLE_API_TOKEN }}" "${{ env.BUILD_NUMBER }}" "${{ env.BUILD_KEY }}" "${{ github.workspace }}/output/PublishTest/AirWatchDB_UnitTestsResult.xml"
+    - name: Remove AWInstaller folder
+      shell: bash
+      run: |
+        cd ..
+        rm -rf AWInstaller/*
