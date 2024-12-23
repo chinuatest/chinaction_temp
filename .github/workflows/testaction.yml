@@ -12,6 +12,7 @@ env:
   COLOR: "Blue"
   # Setting an environment variable with the value of a configuration variable
   env_var: ${{ vars.ENV_CONTEXT_VAR }}
+  BAMBOO_KEY: "${{ vars.BUILD_KEY || env.BAMBOO_BUILDNUMBER }}"
   
 jobs:
   job1a:
@@ -20,6 +21,7 @@ jobs:
       - name: Set powershell
         id: set-powershell
         run: |
+          Write-Output "BAMBOO_KEY -123->  ${{ env.BAMBOO_KEY }}"
           $cost = '5.23'
           Write-Output "Cost is $cost 11" 
           Write-Output "COST=${cost}" >> $env:GITHUB_OUTPUT
