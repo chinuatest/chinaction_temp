@@ -12,7 +12,7 @@ env:
   COLOR: "Blue"
   # Setting an environment variable with the value of a configuration variable
   env_var: ${{ vars.ENV_CONTEXT_VAR }}
-  BAMBOO_KEY: "${{ vars.BUILD_KEY || env.BAMBOO_BUILDNUMBER }}"
+  BAMBOO_KEY: "${{ vars.BUILD_KEY || format('{0}-{1}-{2}', github.workflow, github.job, github.run_id) }}"
   
 jobs:
   job1a:
