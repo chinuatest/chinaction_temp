@@ -45,6 +45,7 @@ jobs:
     steps:
       - name: Use Variable
         run: |
+          echo "__ REPO NAME: ${{ github.event.repository.name }}"
           echo "uemplan: ${{ inputs.uem-services-plan }} airwatch: ${{ inputs.airwatch-ci-upload-branch || 'main' }}" >> $GITHUB_STEP_SUMMARY
           echo "devqeclusters: ${{ inputs.dev-qe-clusters-branch }} uem-services-promoter: ${{ inputs.uem-services-promoter-branch  || 'main' }}" >> $GITHUB_STEP_SUMMARY
           echo "canonical-dev-qe-clusters: ${{ inputs.canonical-dev-qe-clusters-branch || 'main' }} uem-apigw: ${{ inputs.uem-apigw-branch || 'main' }}" >> $GITHUB_STEP_SUMMARY
