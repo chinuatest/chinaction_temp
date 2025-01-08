@@ -43,6 +43,10 @@ jobs:
   Build:
     runs-on: ubuntu-latest
     steps:
+      - name: Rand job
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          echo "This is Random"
       - name: Use Variable
         run: |
           echo "__ REPO NAME: ${{ github.event.repository.name }}"
