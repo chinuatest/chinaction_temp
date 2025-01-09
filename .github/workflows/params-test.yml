@@ -43,6 +43,14 @@ jobs:
   Build:
     runs-on: ubuntu-latest
     steps:
+      - name: Add labels to summary
+        run: |
+          echo "<details><summary>Labels</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Key1: Value1" >> $GITHUB_STEP_SUMMARY
+          echo "- Key2: Value2" >> $GITHUB_STEP_SUMMARY
+          echo "- Key3: Value3" >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
       - name: Rand job
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
