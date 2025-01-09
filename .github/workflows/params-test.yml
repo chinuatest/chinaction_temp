@@ -48,10 +48,14 @@ jobs:
         run: |
           Write-Host "<details><summary>Labels</summary>" >> $GITHUB_STEP_SUMMARY
           Write-Host "" >> $GITHUB_STEP_SUMMARY
-          Write-Host "- Key1: Value1" >> $GITHUB_STEP_SUMMARY
-          Write-Host "- Key2: Value2" >> $GITHUB_STEP_SUMMARY
-          Write-Host "- Key3: Value3" >> $GITHUB_STEP_SUMMARY
-          Write-Host "</details>" >> $GITHUB_STEP_SUMMARY
+          Write-Host "- Key1: Value1" >> $env:GITHUB_STEP_SUMMARY
+          Write-Host "- Key2: Value2" >> $env:GITHUB_STEP_SUMMARY
+          Write-Host "- Key3: Value3" >> $env:GITHUB_STEP_SUMMARY
+          Write-Host "</details>" >> $env:GITHUB_STEP_SUMMARY
+          $cost = '5.23'
+          Write-Output "Cost is $cost 11" 
+          Write-Output "COST=${cost}" >> $env:GITHUB_OUTPUT
+          Write-Output "COST1=${cost}" >> $env:GITHUB_ENV
   Linux-Build:
     runs-on: ubuntu-latest
     steps:
