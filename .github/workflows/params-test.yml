@@ -40,7 +40,19 @@ permissions:
   contents: read
 
 jobs:
-  Build:
+  Win-Build:
+    runs-on: windows-latest
+    steps:
+      - name: Add labels to summary
+        shell: PowerShell
+        run: |
+          Write-Output "<details><summary>Labels</summary>" >> $GITHUB_STEP_SUMMARY
+          Write-Output "" >> $GITHUB_STEP_SUMMARY
+          Write-Output "- Key1: Value1" >> $GITHUB_STEP_SUMMARY
+          Write-Output "- Key2: Value2" >> $GITHUB_STEP_SUMMARY
+          Write-Output "- Key3: Value3" >> $GITHUB_STEP_SUMMARY
+          Write-Output "</details>" >> $GITHUB_STEP_SUMMARY
+  Linux-Build:
     runs-on: ubuntu-latest
     steps:
       - name: Add labels to summary
