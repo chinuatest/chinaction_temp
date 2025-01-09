@@ -39,12 +39,19 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  BUILD_NUMBER: '${{ github.run_id }}-${{ github.run_attempt }}'
+  
 jobs:
   Win-Build:
     runs-on: windows-latest
     steps:
+      - name: Current
+        run: |
+          Write-Output "<details><summary>Labels</summary>" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "uem_canonical_build_key: ${{ env.BUILD_NUMBER }} </details>" >> $env:GITHUB_STEP_SUMMARY
       - name: Add labels to summary
-        shell: PowerShell
         run: |
           Write-Output "<details><summary>Labels</summary>" >> $env:GITHUB_STEP_SUMMARY
           Write-Output "" >> $env:GITHUB_STEP_SUMMARY
