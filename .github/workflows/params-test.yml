@@ -46,8 +46,8 @@ jobs:
       - name: Add labels to summary
         shell: PowerShell
         run: |
-          Write-Output "<details><summary>Labels</summary>" >> $GITHUB_STEP_SUMMARY
-          Write-Output "" >> $GITHUB_STEP_SUMMARY
+          Write-Output "<details><summary>Labels</summary>" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "" >> $env:GITHUB_STEP_SUMMARY
           Write-Output "- Key1: Value1" >> $env:GITHUB_STEP_SUMMARY
           Write-Output "- Key2: Value2" >> $env:GITHUB_STEP_SUMMARY
           Write-Output "- Key3: Value3" >> $env:GITHUB_STEP_SUMMARY
