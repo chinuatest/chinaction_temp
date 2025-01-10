@@ -51,8 +51,8 @@ jobs:
           Write-Output "<details><summary>Labels</summary>" >> $env:GITHUB_STEP_SUMMARY
           Write-Output "" >> $env:GITHUB_STEP_SUMMARY
           Write-Output "uem_canonical_build_key: ${{ env.BUILD_NUMBER }} </details>" >> $env:GITHUB_STEP_SUMMARY
-          echo ":error:User Sammy is not permitted to trigger this workflow" >> $GITHUB_STEP_SUMMARY
-          echo "::error:: ### User Sammy is not permitted to trigger this workflow" 
+          echo ":error:User Tom is not permitted to trigger this workflow" >> $GITHUB_STEP_SUMMARY
+          echo "::error:: User Sammy is not permitted to trigger this workflow" 
       - name: Add labels to summary
         run: |
           Write-Output "<details><summary>Labels</summary>" >> $env:GITHUB_STEP_SUMMARY
@@ -76,6 +76,7 @@ jobs:
           echo "- Key2: Value2" >> $GITHUB_STEP_SUMMARY
           echo "- Key3: Value3" >> $GITHUB_STEP_SUMMARY
           echo "</details>" >> $GITHUB_STEP_SUMMARY
+          echo ":error:User Finn is not permitted to trigger this workflow" >> $GITHUB_STEP_SUMMARY
       - name: Rand job
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
