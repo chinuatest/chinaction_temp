@@ -76,7 +76,7 @@ jobs:
           echo "- Key2: Value2" >> $GITHUB_STEP_SUMMARY
           echo "- Key3: Value3" >> $GITHUB_STEP_SUMMARY
           echo "</details>" >> $GITHUB_STEP_SUMMARY
-          echo ":error:User Finn is not permitted to trigger this workflow" >> $GITHUB_STEP_SUMMARY
+          echo "::error::User Finn is not permitted to trigger this workflow"
       - name: Rand job
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
