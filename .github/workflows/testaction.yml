@@ -59,9 +59,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set Variable
-        run: echo "MY_VARIABLEX=my_value1" >> $GITHUB_ENV #this is workflow scoped
-      - name: Use again
+        env:
+          g_workspace: $GITHUB_WORKSPACE
+          g.workspace: ${{ github.workspace }}
         run: |
+          echo "linux github.workspace = ${{ github.workspace }}"
+          echo "linux GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
+          echo "MY_VARIABLEX=my_value1" >> $GITHUB_ENV #this is workflow scoped
+      - name: Use again
+        run: | 
+          echo "linux github.workspace = ${{ github.workspace }}"
+          echo "linux GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
           $cost = 5.23
 
           $myVariable = "Hello World"
