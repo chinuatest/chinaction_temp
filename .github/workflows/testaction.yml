@@ -22,10 +22,10 @@ jobs:
         id: set-powershell
         env:
           g.workspace: ${{ github.workspace }}
-          g_workspace: $GITHUB_WORKSPACE
+          g_workspace: ${GITHUB_WORKSPACE}
         run: |
           Write-Output "github.workspace ->  ${{ github.workspace }}"
-          Write-Output "__GITHUB_WORKSPACE ->  $GITHUB_WORKSPACE"
+          Write-Output "__GITHUB_WORKSPACE ->  ${GITHUB_WORKSPACE}"
           Write-Output "BAMBOO_KEY -123->  ${{ env.BAMBOO_KEY }}"
           $cost = '5.23'
           Write-Output "Cost is $cost 11" 
@@ -80,7 +80,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set environment variable
+        env:
+          g_workspace: $GITHUB_WORKSPACE
+          g.workspace: ${{ github.workspace }}
         run: |- 
+          echo "linux github.workspace = ${{ github.workspace }}"
+          echo "linux GITHUB_WORKSPACE = $GITHUB_WORKSPACE"
           echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
           echo "BALANCE=80" >> $GITHUB_ENV
           echo "SIZE=Large" >> $GITHUB_ENV
