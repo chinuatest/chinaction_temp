@@ -22,10 +22,10 @@ jobs:
         id: set-powershell
         env:
           g.workspace: ${{ github.workspace }}
-          g_workspace: ${GITHUB_WORKSPACE}
+          g_workspace: $env:GITHUB_WORKSPACE
         run: |
           Write-Output "github.workspace ->  ${{ github.workspace }}"
-          Write-Output "__GITHUB_WORKSPACE ->  ${GITHUB_WORKSPACE}"
+          Write-Output "__GITHUB_WORKSPACE ->  $env:GITHUB_WORKSPACE"
           Write-Output "BAMBOO_KEY -123->  ${{ env.BAMBOO_KEY }}"
           $cost = '5.23'
           Write-Output "Cost is $cost 11" 
