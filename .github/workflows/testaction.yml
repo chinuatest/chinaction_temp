@@ -38,6 +38,17 @@ jobs:
         run: |
           Write-Output "Internal Cost is ${{ env.COST }}"
           Write-Output "Internal Cost1 is ${{ env.COST1 }}"
+
+      # Step 2: Create an environment variable using PowerShell
+      - name: Create Env Variable
+        id: create-env
+        run: |
+          $env:MY_CUSTOM_VAR = "Hello from PowerShell"
+          Write-Host "MY_CUSTOM_VAR=$env:MY_CUSTOM_VAR" >> $env:GITHUB_ENV
+      # Step 3: Use the environment variable in the next step
+      - name: Use Env Variable
+        run: |
+          echo "The value of MY_CUSTOM_VAR is: $MY_CUSTOM_VAR"
     outputs:
       COST: ${{ steps.set-powershell.outputs.COST}}
       MYOUTPUTA: ${{ steps.set-powershell.outputs.myOutputa}}  
