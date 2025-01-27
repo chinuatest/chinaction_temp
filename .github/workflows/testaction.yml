@@ -153,12 +153,12 @@ jobs:
           TEST_STATUS="FAILED"
           TEST_STATUS1="PASSED"
           SECOND_RUN="FALSE"
-          echo 'TEST_STATUS: $TEST_STATUS'
+          echo "TEST_STATUS: $TEST_STATUS"
           echo "TEST_STATUS=$TEST_STATUS" >> "$GITHUB_ENV"
           echo "TEST_STATUS=$TEST_STATUS" >> "$GITHUB_OUTPUT"
           echo "TEST_STATUS1=${TEST_STATUS1}" >> "$GITHUB_ENV"
-          echo 'SECOND_RUN=$SECOND_RUN' >> "$GITHUB_ENV"
-          echo 'SECOND_RUN=$SECOND_RUN' >> "$GITHUB_OUTPUT"
+          echo "SECOND_RUN=$SECOND_RUN" >> "$GITHUB_ENV"
+          echo "SECOND_RUN=$SECOND_RUN" >> "$GITHUB_OUTPUT"
           echo "Test Status: $TEST_STATUS" >> "$GITHUB_STEP_SUMMARY"
           echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
           echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
