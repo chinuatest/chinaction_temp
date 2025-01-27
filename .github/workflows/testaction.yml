@@ -148,10 +148,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Use environment variable
+        id: usevar1
         run: |-
           TEST_STATUS="FAILED"
-          echo 'TEST_STATUS=$TEST_STATUS'
+          echo 'TEST_STATUS: $TEST_STATUS'
           echo "TEST_STATUS=$TEST_STATUS" >> "$GITHUB_ENV"
+          echo "TEST_STATUS=$TEST_STATUS" >> "$$GITHUB_OUTPUT"
           echo "Test Status: $TEST_STATUS" >> "$GITHUB_STEP_SUMMARY"
           echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
           echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
@@ -174,7 +176,9 @@ jobs:
         
       - name: Set Output
         id: step1
-        run: echo "::set-output name=my_output::my_value"
+        run: |
+          echo "Test Status --> ${{ env.TEST_STATUS }}"
+          echo "::set-output name=my_output::my_value"
       - name: Use Output
         run: echo "${{ steps.step1.outputs.my_output }}"
       - name: Get color
