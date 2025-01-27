@@ -84,7 +84,7 @@ jobs:
           $cost = 5.23
 
           $myVariable = "Hello World"
-          Write-Output "::set-output name=myOutput::${myVariable}"
+          #Write-Output "::set-output name=myOutput::${myVariable}"
 
   job2:
     needs: job1
@@ -149,6 +149,8 @@ jobs:
     steps:
       - name: Use environment variable
         run: |-
+          $TEST_STATUS="FAILED"
+          echo 'TEST_STATUS="${TEST_STATUS}"' >> "$GITHUB_OUTPUT"
           echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
           echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
           echo "SIZE : $SIZE ">> $GITHUB_STEP_SUMMARY
