@@ -151,9 +151,13 @@ jobs:
         id: usevar1
         run: |-
           TEST_STATUS="FAILED"
+          TEST_STATUS1="PASSED"
+          SECOND_RUN="FALSE"
           echo 'TEST_STATUS: $TEST_STATUS'
           echo "TEST_STATUS=$TEST_STATUS" >> "$GITHUB_ENV"
-          echo "TEST_STATUS=$TEST_STATUS" >> "$$GITHUB_OUTPUT"
+          echo "TEST_STATUS=$TEST_STATUS" >> "$GITHUB_OUTPUT"
+          echo "TEST_STATUS=${TEST_STATUS1}" >> "$GITHUB_OUTPUT"
+          echo 'SECOND_RUN=$SECOND_RUN' >> "$GITHUB_OUTPUT"
           echo "Test Status: $TEST_STATUS" >> "$GITHUB_STEP_SUMMARY"
           echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
           echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
@@ -178,6 +182,8 @@ jobs:
         id: step1
         run: |
           echo "Test Status --> ${{ env.TEST_STATUS }}"
+          echo "Test Status 1 ||--> ${{ env.TEST_STATUS }}"
+          echo "SECOND_RUN ||--> ${{ env.SECOND_RUN }}"
           echo "::set-output name=my_output::my_value"
       - name: Use Output
         run: echo "${{ steps.step1.outputs.my_output }}"
