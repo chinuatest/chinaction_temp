@@ -2,7 +2,11 @@ name: Workflow for Environment Files
   
 on: 
   workflow_dispatch
-
+  
+permissions:  
+  checks: write   # Allows posting test summaries and check-runs
+  contents: read  # Required for repo access
+  
 jobs:
   test-python:
     runs-on: ubuntu-latest
