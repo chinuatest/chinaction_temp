@@ -47,7 +47,7 @@ jobs:
         if: always()
         with:
           check_name: "Build Application Unit Test Results"
-          check_run: false
+          check_run: true
           action_fail: true
           fail_on: "test failures"
           files: "test-results.xml"
