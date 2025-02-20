@@ -47,10 +47,10 @@ jobs:
         if: always()
         with:
           check_name: "Build Application Unit Test Results"
-          check_run: true
+          check_run: false
           action_fail: true
           fail_on: "test failures"
-          files: "*.xml"
+          files: "test-results.xml.xml"
           action_fail_on_inconclusive: true
 
       - name: Upload test results
