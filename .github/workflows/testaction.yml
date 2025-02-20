@@ -19,7 +19,22 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install pytest
+        run: pip install pytest pytest-cov
 
-      - name: Run tests
-        run: pytest scripts/test_greet.py
+      - name: Run tests with coverage
+        run: pytest --cov=scripts/test_greet.py --cov-report=xml --cov-report=term 
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Run tests and save results
+        run: pytest --junitxml=test-results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
