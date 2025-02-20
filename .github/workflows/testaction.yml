@@ -1,112 +1,22 @@
 name: Workflow for Environment Files
-
   
 on: 
   workflow_dispatch
 
-env:
-  BAMBOO_BUILDNUMBER: '${{ github.workflow }}-${{ github.job }}-${{ github.run_id }}'
-  REF: "${{ github.ref }}"
-  TARGET_BRANCH: ${REF#refs/heads/}
-  BALANCE: 35
-  COLOR: "Blue"
-  # Setting an environment variable with the value of a configuration variable
-  env_var: ${{ vars.ENV_CONTEXT_VAR }}
-  
 jobs:
-  job1:
+  test-python:
     runs-on: ubuntu-latest
     steps:
-      - name: Set Variable
-        run: echo "MY_VARIABLEX=my_value1" >> $GITHUB_ENV #this is workflow scoped
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  job2:
-    needs: job1
-    runs-on: ubuntu-latest
-    steps:
-      - name: Use Variable
-        run: |-
-          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}"
-          echo "MY_VARIABLEX: ${{ env.MY_VARIABLEX }}">> $GITHUB_STEP_SUMMARY
-        
-  set_and_use_env_vars:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set environment variable
-        run: |- 
-          echo "MY_ENV_VAR=myValue" >> $GITHUB_ENV
-          echo "BALANCE=80" >> $GITHUB_ENV
-          echo "SIZE=Large" >> $GITHUB_ENV
-          echo "Color = $env.COLOR"
-          export COLOR="RED11"
-          echo "env.COLOR=Red1" >> $GITHUB_ENV
-          echo "$env.COLOR=Red2" >> $GITHUB_ENV
-          echo "MY_VARIABLE=my_value" >> $GITHUB_ENV #this is workflow scoped
-          echo "COLOR=Red" >> $GITHUB_ENV
-      - name: Set color
-        id: color-selector
-        run: echo "SELECTED_COLOR=green" >> "$GITHUB_OUTPUT"
-      - name: Get color
-        env:
-          SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
-        run: echo "The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
-
-      - name: Use environment variable
-        run: |-
-          echo "The value of MY_ENV_VAR is $MY_ENV_VAR"
-          echo "Balance : ${{ env.BALANCE }} "
-          echo "SIZE : $SIZE "
-          echo "$BALANCE=80" >> $GITHUB_ENV
-          echo "$env.BALANCE=81" >> $GITHUB_ENV
-          echo "COLORa : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
-          echo "1this is workflow scoped : ${{ env.MY_VARIABLE }} ">> $GITHUB_STEP_SUMMARY
-
-      - name: Generate File
-        run: echo "Hello, World!" > hello.txt
-        
-      - name: Upload File
-        uses: actions/upload-artifact@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          name: my-artifact
-          path: hello.txt
-    outputs:
-      my_color1: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
-      
-  set_and_use_env_vars2:
-    needs: set_and_use_env_vars
-    runs-on: ubuntu-latest
-    steps:
-      - name: Use environment variable
-        run: |-
-          echo "V2: The value of MY_ENV_VAR is $MY_ENV_VAR" >> $GITHUB_STEP_SUMMARY
-          echo "Workspace: ${{ github.workspace }}">> $GITHUB_STEP_SUMMARY
-          echo "SIZE : $SIZE ">> $GITHUB_STEP_SUMMARY
-          echo "COLOR5 : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
-          echo "TARGET_BRANCH: ${{ env.TARGET_BRANCH }}">> $GITHUB_STEP_SUMMARY
-          echo "Balance: ${{ env.BALANCE }}">> $GITHUB_STEP_SUMMARY
-          echo "BAMBOO_BUILDNUMBER: ${{ env.BAMBOO_BUILDNUMBER }}">> $GITHUB_STEP_SUMMARY
-          echo "BUILDNUMBER: ${{ github.workflow }}-${{ github.job }}-${{ github.run_id }} ">> $GITHUB_STEP_SUMMARY
-          echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
-          echo "2this is workflow scoped : ${{ env.MY_VARIABLE }} ">> $GITHUB_STEP_SUMMARY
-          echo "COLORa2 : ${{ env.COLOR }} ">> $GITHUB_STEP_SUMMARY
-          
-      - name: Download File
-        uses: actions/download-artifact@v4
-        with:
-          name: my-artifact
-      - name: Use File
-        run: cat hello.txt
-        
-      - name: Set Output
-        id: step1
-        run: echo "::set-output name=my_output::my_value"
-      - name: Use Output
-        run: echo "${{ steps.step1.outputs.my_output }}"
-      - name: Get color
-        env:
-          SELECTED_COLOR: ${{ steps.color-selector.outputs.SELECTED_COLOR }}
-          MY_COLOR : ${{ needs.set_and_use_env_vars.outputs.my_color1 }}
-        run: |-
-          echo "V2 The selected color is $SELECTED_COLOR">> $GITHUB_STEP_SUMMARY
-          echo "V3 color is $MY_COLOR -> ">> $GITHUB_STEP_SUMMARY
-          
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install pytest
+
+      - name: Run tests
+        run: pytest test_script.py
