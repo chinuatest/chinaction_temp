@@ -18,12 +18,12 @@ jobs:
   job1a:
     runs-on: windows-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set powershell
-        id: set-powershell
-        env:
-          g.workspace: ${{ github.workspace }}
-          g_workspace: $env:GITHUB_WORKSPACE
         run: |
+          Get-ChildItem
+
           Install-Module -Name Invoke-MsBuild -Force
           Import-Module Invoke-MsBuild
           $file_path = "BambooBuild.proj"
