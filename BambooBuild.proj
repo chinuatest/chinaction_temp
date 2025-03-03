@@ -1,12 +1,11 @@
-<Project>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
   <PropertyGroup>
-    <!-- Capture the environment variable -->
+    <!-- Capture the GitHub Actions environment variable -->
     <IsGitHubActions>$(GITHUB_ACTIONS)</IsGitHubActions>
   </PropertyGroup>
 
-  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="UpdateNuGet;SkipNuGetUpdate" />
-
-  <!-- Run the update only if NOT in GitHub Actions -->
+  <!-- Run the NuGet update only if NOT in GitHub Actions -->
   <Target Name="UpdateNuGet" Condition="'$(IsGitHubActions)' != 'true'">
     <Message Text="Running nuget.exe update -self (local environment)" Importance="High" />
     <Exec Command="nuget.exe update -self" />
@@ -16,4 +15,8 @@
   <Target Name="SkipNuGetUpdate" Condition="'$(IsGitHubActions)' == 'true'">
     <Message Text="Skipping nuget.exe update -self because running inside GitHub Actions." Importance="High" />
   </Target>
+
+  <!-- Main target that runs both checks -->
+  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="UpdateNuGet;SkipNuGetUpdate" />
+
 </Project>
