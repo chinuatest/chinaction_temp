@@ -27,4 +27,4 @@ jobs:
           Install-Module -Name Invoke-MsBuild -Force
           Import-Module Invoke-MsBuild
           $file_path = "BambooBuild.proj"
-          Invoke-MsBuild -Path $file_path -MsBuildParameters "/p:Configuration=Release /m /nr:false /verbosity:diagnostic /fl -v:diag"
+          Invoke-MsBuild -Path $file_path -MsBuildParameters "/t:CheckAndMaybeUpdateNuGet /p:Configuration=Release /m /nr:false /verbosity:diagnostic /fl -v:diag"
