@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <!-- Capture the environment variable -->
+    <IsGitHubActions>$(GITHUB_ACTIONS)</IsGitHubActions>
+  </PropertyGroup>
+
+  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="UpdateNuGet;SkipNuGetUpdate" />
+
+  <!-- Run the update only if NOT in GitHub Actions -->
+  <Target Name="UpdateNuGet" Condition="'$(IsGitHubActions)' != 'true'">
+    <Message Text="Running nuget.exe update -self (local environment)" Importance="High" />
+    <Exec Command="nuget.exe update -self" />
+  </Target>
+
+  <!-- Show a message when skipping the update in GitHub Actions -->
+  <Target Name="SkipNuGetUpdate" Condition="'$(IsGitHubActions)' == 'true'">
+    <Message Text="Skipping nuget.exe update -self because running inside GitHub Actions." Importance="High" />
+  </Target>
+</Project>
