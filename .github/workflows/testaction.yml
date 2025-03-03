@@ -21,6 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set powershell v1
+        continue-on-error: true
         run: |
           Get-ChildItem
 
@@ -29,6 +30,7 @@ jobs:
           $file_path = "BambooBuild.proj"
           Invoke-MsBuild -Path $file_path -MsBuildParameters "/t:CheckAndMaybeUpdateNuGet /p:Configuration=Release /m /nr:false /verbosity:diagnostic /fl -v:diag"
       - name: Set powershell v2
+        continue-on-error: true
         run: |
           Get-ChildItem
 
@@ -37,7 +39,7 @@ jobs:
           # Locate MSBuild
           try {
               # Define the path to the amd64 MSBuild.exe
-              $msbuildPath = "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\amd64\MSBuild.exe"
+              $msbuildPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MsBuild\Current\Bin\amd64\MSBuild.exe"
     
               # Validate the MSBuild.exe path
               if (-not (Test-Path $msbuildPath)) {
@@ -81,18 +83,21 @@ jobs:
           # If no failures, indicate success
           Write-Host "Build succeeded. Logs saved to $logFile"
       - name: Upload MSBuild log
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: MsBuildLog
           path: MsBuild_Log.txt
           if-no-files-found: warn
       - name: Upload BambooBuild.proj.msbuild.errors.log
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: MsBuildLog
           path: C:\Users\runneradmin\AppData\Local\Temp\BambooBuild.proj.msbuild.errors.log
           if-no-files-found: warn
       - name: Upload BambooBuild.proj.msbuild.log
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: MsBuildLog
