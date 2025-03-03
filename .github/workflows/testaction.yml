@@ -82,6 +82,15 @@ jobs:
   
           # If no failures, indicate success
           Write-Host "Build succeeded. Logs saved to $logFile"
+      - name: Write to output log
+        continue-on-error: true
+        run: |
+          Get-ChildItem
+          if (Test-Path MsBuild_Log.txt) {
+              Get-Content MsBuild_Log.txt
+          } else {
+              Write-Host "File not found."
+          }
       - name: Upload MSBuild log
         continue-on-error: true
         uses: actions/upload-artifact@v4
