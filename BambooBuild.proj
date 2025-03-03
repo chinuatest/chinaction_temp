@@ -15,6 +15,7 @@
   <!-- Main info printout -->
   <Target Name="PrintEnvironmentInfo">
     <Message Text="GIT_ACTIONS='$(IsGitActions)'" Importance="High" />
+    <Message Text="v2 GIT_ACTIONS=$(GIT_ACTIONS)" Importance="High" />
   </Target>
 
   <!-- Run the NuGet update only if NOT in GIT_ACTIONS and nuget.exe exists -->
