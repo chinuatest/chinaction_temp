@@ -1,8 +1,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <!-- Capture GitHub Actions environment variable -->
-    <IsGitHubActions>$(GIT_ACTIONS)</IsGitHubActions>
+    <!-- Capture GIT_ACTIONS environment variable -->
+    <IsGitActions>$(GIT_ACTIONS)</IsGitActions>
     <!-- Path to nuget.exe (adjust if needed) -->
     <NuGetExePath>nuget.exe</NuGetExePath>
   </PropertyGroup>
@@ -12,23 +12,28 @@
     <NuGetExeFile Include="$(NuGetExePath)" Condition="Exists('$(NuGetExePath)')" />
   </ItemGroup>
 
-  <!-- Run the NuGet update only if NOT in GitHub Actions and nuget.exe exists -->
-  <Target Name="UpdateNuGet" Condition="'$(IsGitHubActions)' != 'true' and '@(NuGetExeFile)' != ''">
+  <!-- Main info printout -->
+  <Target Name="PrintEnvironmentInfo">
+    <Message Text="GIT_ACTIONS='$(IsGitActions)'" Importance="High" />
+  </Target>
+
+  <!-- Run the NuGet update only if NOT in GIT_ACTIONS and nuget.exe exists -->
+  <Target Name="UpdateNuGet" Condition="'$(IsGitActions)' != 'true' and '@(NuGetExeFile)' != ''">
     <Message Text="Running nuget.exe update -self (local environment)" Importance="High" />
     <Exec Command="$(NuGetExePath) update -self" />
   </Target>
 
-  <!-- Skip the update in GitHub Actions -->
-  <Target Name="SkipNuGetUpdate" Condition="'$(IsGitHubActions)' == 'true'">
-    <Message Text="Skipping nuget.exe update -self because running inside GitHub Actions." Importance="High" />
+  <!-- Skip the update in GIT_ACTIONS -->
+  <Target Name="SkipNuGetUpdate" Condition="'$(IsGitActions)' == 'true'">
+    <Message Text="Skipping nuget.exe update -self because running inside Git Actions." Importance="High" />
   </Target>
 
   <!-- Handle nuget.exe missing -->
-  <Target Name="SkipMissingNuGet" Condition="'@(NuGetExeFile)' == '' and '$(IsGitHubActions)' != 'true'">
+  <Target Name="SkipMissingNuGet" Condition="'@(NuGetExeFile)' == '' and '$(IsGitActions)' != 'true'">
     <Message Text="Skipping nuget.exe update -self because nuget.exe was not found." Importance="High" />
   </Target>
 
   <!-- Main target that runs all checks -->
-  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet" />
+  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet" />
 
 </Project>
