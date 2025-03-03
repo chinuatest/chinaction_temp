@@ -25,6 +25,8 @@ jobs:
         run: |
           Get-ChildItem
 
+          $env:GIT_ACTIONS = "${{ env.GIT_ACTIONS }}"
+
           Install-Module -Name Invoke-MsBuild -Force
           Import-Module Invoke-MsBuild
           $file_path = "BambooBuild.proj"
@@ -34,7 +36,7 @@ jobs:
         run: |
           Get-ChildItem
 
-          $env:bamboo_planRepository_branchName = "${{ inputs.canonical-branch }}"
+          $env:GIT_ACTIONS = "${{ env.GIT_ACTIONS }}"
 
           # Locate MSBuild
           try {
