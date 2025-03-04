@@ -70,7 +70,7 @@ jobs:
           if (Test-Path $logFile) { Remove-Item $logFile }
   
           # Run MSBuild with all parameters in one line
-          & $msbuildPath "$projectFile" /p:Configuration=Release /p:GitHubCommitSHA=${{ github.sha }} /p:GitHubRunID=${{ github.run_id }} /p:GitHubRunNumber=${{ github.run_number }} /m /nr:false /fl "/flp:LogFile=$logFile;"
+          & $msbuildPath "$projectFile" /t:CheckAndMaybeUpdateNuGet /p:Configuration=Release /p:GitHubCommitSHA=${{ github.sha }} /p:GitHubRunID=${{ github.run_id }} /p:GitHubRunNumber=${{ github.run_number }} /m /nr:false /fl "/flp:LogFile=$logFile;"
   
           # Check the exit code of MSBuild
           if ($LASTEXITCODE -ne 0) {
