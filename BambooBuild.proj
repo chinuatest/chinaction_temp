@@ -40,7 +40,7 @@
     <Message Text="Skipping nuget.exe update -self because nuget.exe was not found." Importance="High" />
   </Target>
 
-  <!-- Main target that runs all checks -->
-  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet;UpdateNugetPackage" />
+  <!-- Main target that runs all checks DependsOnTargets="PrintEnvironmentInfo;UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet;UpdateNugetPackage" -->
+  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNugetPackage" />
 
 </Project>
