@@ -12,12 +12,6 @@
     <NuGetExeFile Include="$(NuGetExePath)" Condition="Exists('$(NuGetExePath)')" />
   </ItemGroup>
 
-  <!-- Main info printout -->
-  <Target Name="PrintEnvironmentInfo">
-    <Message Text="111 UpdateNuget GIT_ACTIONS='$(UpdateNuget)'" Importance="High" />
-    <Message Text="v3 GIT_ACTIONS=$(GIT_ACTIONS)" Importance="High" />
-  </Target>
-
   <Target Name="UpdateNugetPackage" Condition="'$(UpdateNuget)' == 'true'" >
     <Message Text="22233333 -oo- Updating nuget.exe" Importance="High" />
   </Target>
