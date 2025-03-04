@@ -21,6 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set powershell v1
+        if: 1 == 2
         continue-on-error: true
         run: |
           Get-ChildItem
