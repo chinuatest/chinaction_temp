@@ -19,7 +19,7 @@
     <Message Text="v2 GIT_ACTIONS=$(GIT_ACTIONS)" Importance="High" />
   </Target>
 
-  <Target Name="UpdateNugetPackage" Condition="'$(GIT_ACTIONS)' == 'true'" >
+  <Target Name="UpdateNugetPackage" Condition="'$(UpdateNuget)' == 'true'" >
     <Message Text="22233333 -oo- Updating nuget.exe" Importance="High" />
     <Exec Command="nuget.exe update -self"/>    
   </Target>
