@@ -18,6 +18,11 @@
     <Message Text="v2 GIT_ACTIONS=$(GIT_ACTIONS)" Importance="High" />
   </Target>
 
+  <Target Name="UpdateNugetPackage" Condition="'$(GIT_ACTIONS)' != 'true' >
+    <Message Text="22233333 -> Updating nuget.exe" Importance="High" />
+    <Exec Command="nuget.exe update -self"/>    
+  </Target>
+
   <!-- Run the NuGet update only if NOT in GIT_ACTIONS and nuget.exe exists -->
   <Target Name="UpdateNuGet" Condition="'$(IsGitActions)' != 'true' and '@(NuGetExeFile)' != ''">
     <Message Text="Running nuget.exe update -self (local environment)" Importance="High" />
@@ -35,6 +40,6 @@
   </Target>
 
   <!-- Main target that runs all checks -->
-  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet" />
+  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet;UpdateNugetPackage" />
 
 </Project>
