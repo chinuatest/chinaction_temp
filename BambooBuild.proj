@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <!-- Capture GIT_ACTIONS environment variable -->
-    <IsGitActions>$(GIT_ACTIONS)</IsGitActions>
     <UpdateNuget>$(GIT_ACTIONS)</UpdateNuget>
     <!-- Path to nuget.exe (adjust if needed) -->
     <NuGetExePath>nuget.exe</NuGetExePath>
@@ -15,7 +14,7 @@
 
   <!-- Main info printout -->
   <Target Name="PrintEnvironmentInfo">
-    <Message Text="111 GIT_ACTIONS='$(IsGitActions)'" Importance="High" />
+    <Message Text="111 GIT_ACTIONS='$(UpdateNuget)'" Importance="High" />
     <Message Text="v3 GIT_ACTIONS=$(GIT_ACTIONS)" Importance="High" />
   </Target>
 
@@ -46,6 +45,6 @@
   </Target>
 
   <!-- Main target that runs all checks DependsOnTargets="PrintEnvironmentInfo;UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet;UpdateNugetPackage" -->
-  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNugetPackage;NotUpdateNugetPackage" />
+  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="UpdateNugetPackage;NotUpdateNugetPackage;PrintEnvironmentInfo" />
 
 </Project>
