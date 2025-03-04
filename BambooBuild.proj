@@ -19,7 +19,7 @@
   </Target>
 
   <Target Name="UpdateNugetPackage" Condition="'$(GIT_ACTIONS)' != 'true' >
-    <Message Text="22233333 -> Updating nuget.exe" Importance="High" />
+    <Message Text="22233333 -oo- Updating nuget.exe" Importance="High" />
     <Exec Command="nuget.exe update -self"/>    
   </Target>
 
