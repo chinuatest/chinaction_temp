@@ -15,12 +15,17 @@
 
   <!-- Main info printout -->
   <Target Name="PrintEnvironmentInfo">
-    <Message Text="GIT_ACTIONS='$(IsGitActions)'" Importance="High" />
-    <Message Text="v2 GIT_ACTIONS=$(GIT_ACTIONS)" Importance="High" />
+    <Message Text="111 GIT_ACTIONS='$(IsGitActions)'" Importance="High" />
+    <Message Text="v3 GIT_ACTIONS=$(GIT_ACTIONS)" Importance="High" />
   </Target>
 
   <Target Name="UpdateNugetPackage" Condition="'$(UpdateNuget)' == 'true'" >
     <Message Text="22233333 -oo- Updating nuget.exe" Importance="High" />
+    <Exec Command="nuget.exe update -self"/>    
+  </Target>
+
+  <Target Name="NotUpdateNugetPackage" Condition="'$(UpdateNuget)' != 'true'" >
+    <Message Text="Nooooo ~~~ Updating nuget.exe just testing" Importance="High" />
     <Exec Command="nuget.exe update -self"/>    
   </Target>
 
@@ -41,6 +46,6 @@
   </Target>
 
   <!-- Main target that runs all checks DependsOnTargets="PrintEnvironmentInfo;UpdateNuGet;SkipNuGetUpdate;SkipMissingNuGet;UpdateNugetPackage" -->
-  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNugetPackage" />
+  <Target Name="CheckAndMaybeUpdateNuGet" DependsOnTargets="PrintEnvironmentInfo;UpdateNugetPackage;NotUpdateNugetPackage" />
 
 </Project>
