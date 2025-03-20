@@ -27,9 +27,9 @@ jobs:
 
       - name: Run tests with coverage
         run: pytest --cov=scripts  --cov-report=term --cov-report=xml > coverage.txt  2>&1 || true
-      - name: Set lrb var for Long Running Branches
+      - name: Set lrb var for test Long Running Branches
         shell: bash
-        if: startsWith(github.ref_name, 'lrb')
+        if: startsWith(github.ref_name, 'test')
         run: |
           echo "is_lrb=true" >> $GITHUB_ENV 
 
