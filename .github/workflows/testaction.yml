@@ -30,6 +30,7 @@ jobs:
 
       - name: Display coverage report in GitHub Summary
         run: |
+          echo "${{ github.ref_name }} __ skip-uem-and-cp-artifacts-promotion: ${{ startsWith(github.ref_name, 'lrb') ? 'true' : 'false' }}" 
           echo "### Code Coverage Report" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat coverage.txt >> $GITHUB_STEP_SUMMARY
