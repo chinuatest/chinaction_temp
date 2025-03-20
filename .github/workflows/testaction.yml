@@ -27,10 +27,15 @@ jobs:
 
       - name: Run tests with coverage
         run: pytest --cov=scripts  --cov-report=term --cov-report=xml > coverage.txt  2>&1 || true
+      - name: Set lrb var for Long Running Branches
+        shell: bash
+        if: startsWith(github.ref_name, 'lrb')
+        run: |
+          echo "is_lrb=true" >> $GITHUB_ENV 
 
       - name: Display coverage report in GitHub Summary
         run: |
-          echo "${{ github.ref_name }} __ skip-uem-and-cp-artifacts-promotion: ${{ startsWith(github.ref_name, 'lrb') ? 'true' : 'false' }}" 
+          echo "${{ github.ref_name }} __ skip-uem-and-cp-artifacts-promotion: ${{ env.is_lrb || 'false' }}" 
           echo "### Code Coverage Report" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat coverage.txt >> $GITHUB_STEP_SUMMARY
