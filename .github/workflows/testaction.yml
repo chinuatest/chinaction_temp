@@ -1,5 +1,5 @@
 name: Workflow for Environment Files
-description: Chin Testing
+description: Chin Testing for fun
   
 on: 
   workflow_dispatch
