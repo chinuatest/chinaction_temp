@@ -34,7 +34,9 @@ jobs:
     if: always()  # Will always run, even if test or lint failed
     steps:    
       - name: Print local job status
-        run: echo "- >status ${{ needs.test.result }}, ${{ needs.lint.result }}"
+        run: |
+          echo "<<-o->> status ${{ toJSON(needs.test) }}, ${{ toJSON(needs.lint) }}"
+          echo "- >status ${{ needs.test.result }}, ${{ needs.lint.result }}"
         
       - name: Print job status
         if: ${{ success() }}  # Only true if all dependencies succeeded
