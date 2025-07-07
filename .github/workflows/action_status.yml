@@ -25,7 +25,7 @@ jobs:
         run: exit 1      
       - name: Print local job status
         if: always()
-        run: echo "- >status ${{ build.result }}"
+        run: echo "- >status ${{ needs.build.result }}"
       
 
   final:
