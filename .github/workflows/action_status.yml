@@ -1,0 +1,41 @@
+name: Test workflow status
+description: Workflow to trigger ACP-CIT Canonical Integration Tests Workflow
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Building"
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - run: echo "Testing"
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      
+      - name: Fail job
+        run: exit 1      
+      - name: Print local job status
+        if: always()
+        run: echo "- >status ${{ success() }}"
+      
+
+  final:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: always()  # Will always run, even if test or lint failed
+    steps:    
+      - name: Print local job status
+        run: echo "- >status ${{ success() }}"
+        
+      - name: Print job status
+        if: ${{ success() }}  # Only true if all dependencies succeeded
+        run: echo "All previous jobs succeeded!"
